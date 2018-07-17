@@ -1,11 +1,9 @@
 # Learn Go Lang
 
 This sample test API build with go language 1.10
+Using MongoDb as database
 
 ## Getting Started
-
-* copy .env.example to .env
-* give `MONGODB_CONN_STRING` on .env file a connection value
 
 ## How to run
 
@@ -17,10 +15,13 @@ This sample test API build with go language 1.10
 * Run Package
 > `go run ./*.go`
 
+* Run in dev mode (fresh package)
+> `fresh`
+
 
 ## Request Example
 
 ```
 curl --request GET \
-  --url http://localhost:3100/users \
+  --url http://localhost:3100/user \
 ```

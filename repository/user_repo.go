@@ -1,7 +1,7 @@
 // Repository will store any Database handler.
 // Querying, or Creating/ Inserting into any database will stored here
 
-package dao
+package repository
 
 import (
 	"log"
@@ -11,7 +11,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type UserDAO struct {
+type UserRepoAccess struct {
 	Server   string
 	Database string
 }
@@ -23,7 +23,7 @@ const (
 )
 
 // Establish a connection to database
-func (m *UserDAO) Connect() {
+func (m *UserRepoAccess) Connect() {
 	session, err := mgo.Dial(m.Server)
 	if err != nil {
 		log.Fatal(err)
@@ -32,33 +32,33 @@ func (m *UserDAO) Connect() {
 }
 
 // Find list of movies
-func (m *UserDAO) FindAll() ([]User, error) {
+func (m *UserRepoAccess) FindAll() ([]User, error) {
 	var user []User
 	err := db.C(COLLECTION).Find(bson.M{}).All(&user)
 	return user, err
 }
 
 // Find a movie by its id
-func (m *UserDAO) FindById(id string) (User, error) {
+func (m *UserRepoAccess) FindById(id string) (User, error) {
 	var user User
 	err := db.C(COLLECTION).FindId(bson.ObjectIdHex(id)).One(&user)
 	return user, err
 }
 
 // Insert a movie into database
-func (m *UserDAO) Insert(user User) error {
+func (m *UserRepoAccess) Insert(user User) error {
 	err := db.C(COLLECTION).Insert(&user)
 	return err
 }
 
 // Delete an existing movie
-func (m *UserDAO) Delete(user User) error {
+func (m *UserRepoAccess) Delete(user User) error {
 	err := db.C(COLLECTION).Remove(&user)
 	return err
 }
 
 // Update an existing movie
-func (m *UserDAO) Update(user User) error {
+func (m *UserRepoAccess) Update(user User) error {
 	err := db.C(COLLECTION).UpdateId(user.ID, &user)
 	return err
 }

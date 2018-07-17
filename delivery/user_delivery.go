@@ -4,36 +4,36 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"gopkg.in/mgo.v2/bson"
-
 	"github.com/gorilla/mux"
 	. "github.com/user/go-test-rest/config"
 	. "github.com/user/go-test-rest/models"
 	. "github.com/user/go-test-rest/repository"
+	utils "github.com/user/go-test-rest/utils"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var config = Config{}
-var dao = UserDAO{}
+var repoAccess = UserRepoAccess{}
 
 // GET list of movies
 func AllUserEndPoint(w http.ResponseWriter, r *http.Request) {
-	users, err := dao.FindAll()
+	users, err := repoAccess.FindAll()
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+		utils.SendJSONResponse(w, 1, "Error", err.Error(), http.StatusInternalServerError)
 		return
 	}
-	respondWithJson(w, http.StatusOK, users)
+	utils.SendJSONResponse(w, 0, "Success", users, http.StatusOK)
 }
 
 // GET a movie by its ID
 func FindUserEndpoint(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	user, err := dao.FindById(params["id"])
+	user, err := repoAccess.FindById(params["id"])
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid user ID")
+		utils.SendJSONResponse(w, 1, "Error", "Invalid user ID", http.StatusBadRequest)
 		return
 	}
-	respondWithJson(w, http.StatusOK, user)
+	utils.SendJSONResponse(w, 0, "Success", user, http.StatusOK)
 }
 
 // POST a new movie
@@ -41,15 +41,16 @@ func CreateUserEndPoint(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var user User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		utils.SendJSONResponse(w, 1, "Error", "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 	user.ID = bson.NewObjectId()
-	if err := dao.Insert(user); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+	if err := repoAccess.Insert(user); err != nil {
+		utils.SendJSONResponse(w, 1, "Error", err.Error(), http.StatusInternalServerError)
+
 		return
 	}
-	respondWithJson(w, http.StatusCreated, user)
+	utils.SendJSONResponse(w, 0, "Success", user, http.StatusOK)
 }
 
 // PUT update an existing movie
@@ -57,14 +58,14 @@ func UpdateUserEndPoint(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var user User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		utils.SendJSONResponse(w, 1, "Error", "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-	if err := dao.Update(user); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+	if err := repoAccess.Update(user); err != nil {
+		utils.SendJSONResponse(w, 1, "Error", err.Error(), http.StatusInternalServerError)
 		return
 	}
-	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
+	utils.SendJSONResponse(w, 0, "Success", map[string]string{"result": "success"}, http.StatusOK)
 }
 
 // DELETE an existing movie
@@ -72,48 +73,21 @@ func DeleteUserEndPoint(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var user User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		utils.SendJSONResponse(w, 1, "Error", "Invalid request payload", http.StatusBadRequest)
 		return
 	}
-	if err := dao.Delete(user); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
+	if err := repoAccess.Delete(user); err != nil {
+		utils.SendJSONResponse(w, 1, "Error", err.Error(), http.StatusInternalServerError)
 		return
 	}
-	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
-}
-
-func respondWithError(w http.ResponseWriter, code int, msg string) {
-	respondWithJson(w, code, map[string]string{"error": msg})
-}
-
-func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
+	utils.SendJSONResponse(w, 0, "Success", map[string]string{"result": "success"}, http.StatusOK)
 }
 
 // Parse the configuration file 'config.toml', and establish a connection to DB
 func init() {
 	config.Read()
 
-	dao.Server = config.Server
-	dao.Database = config.Database
-	dao.Connect()
-}
-
-// Define HTTP request routes
-func UserRouter() *mux.Router {
-	r := mux.NewRouter()
-	r.HandleFunc("/user", AllUserEndPoint).Methods("GET")
-	r.HandleFunc("/user", CreateUserEndPoint).Methods("POST")
-	r.HandleFunc("/user", UpdateUserEndPoint).Methods("PUT")
-	r.HandleFunc("/user", DeleteUserEndPoint).Methods("DELETE")
-	r.HandleFunc("/user/{id}", FindUserEndpoint).Methods("GET")
-
-	// if err := http.ListenAndServe(":3100", r); err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	return r
+	repoAccess.Server = config.Server
+	repoAccess.Database = config.Database
+	repoAccess.Connect()
 }

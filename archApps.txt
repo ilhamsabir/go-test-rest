@@ -1,0 +1,15 @@
+-> app.go
+	- as serve
+	- call router from router.go
+-> router.go
+	- call all func from delivery
+-> delivery
+	- func that create from repository
+	- func return json data
+-> repository
+	- func to create,query, delete and other to or from database
+-> models
+	- struct data
+-> usecase
+	- bisnis flow
+	- if condition to or from apps
